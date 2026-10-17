@@ -23,31 +23,41 @@ async function loadDevices() {
   }
 }
 
+let token = 0;
+
 async function browse(dir) {
   const serial = $('device').value;
   if (!serial) return;
-  current = dir;
-  $('path').textContent = dir;
-  $('status').textContent = 'Analyzing…';
-  $('list').textContent = '';
+  const mine = ++token;
+  $('status').textContent = `Analyzing ${dir}…`;
   try {
     const entries = await window.api.analyze(serial, dir);
+    if (mine !== token) return;
+    current = dir;
+    $('path').textContent = dir;
+    $('list').textContent = '';
     const max = entries.length ? entries[0].size || 1 : 1;
     for (const e of entries) {
       const li = document.createElement('li');
+      const row = document.createElement(e.isDir ? 'button' : 'div');
+      row.className = 'row';
       const bar = document.createElement('div');
       bar.className = 'bar';
       bar.style.width = `${(e.size / max) * 100}%`;
       const name = document.createElement('span');
-      name.textContent = e.name;
+      name.textContent = e.isDir ? `${e.name}/` : e.name;
       const size = document.createElement('span');
       size.textContent = fmt(e.size);
-      li.append(bar, name, size);
-      li.onclick = () => browse(e.path);
+      row.append(bar, name, size);
+      if (e.isDir) row.onclick = () => browse(e.path);
+      li.appendChild(row);
       $('list').appendChild(li);
     }
-    $('status').textContent = entries.length ? '' : 'Empty or not a directory.';
+    $('status').textContent = entries.length
+      ? 'Sizes may be too small where folders are unreadable (e.g. Android/data).'
+      : 'Empty folder.';
   } catch (e) {
+    if (mine !== token) return;
     $('status').textContent = e.message;
   }
 }
@@ -55,7 +65,6 @@ async function browse(dir) {
 $('refresh').onclick = loadDevices;
 $('device').onchange = () => browse(ROOT);
 $('up').onclick = () => {
-  const parent = current.slice(0, current.lastIndexOf('/')) || '/';
-  if (current !== '/') browse(parent);
+  if (current !== ROOT) browse(current.slice(0, current.lastIndexOf('/')) || ROOT);
 };
 loadDevices();
