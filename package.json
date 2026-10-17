@@ -1,0 +1,14 @@
+{
+  "name": "android-dir-analyzer",
+  "version": "1.0.0",
+  "description": "Analyze a connected Android device's internal storage to see what takes up the most space",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}
